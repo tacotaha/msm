@@ -8,10 +8,23 @@
 
 #define W 8
 #define L 256
-
-#define WINDOW_MASK ((1 << W) - 1)
-#define N_BUCKETS (1 << W)
 #define N_WINDOWS (L / W)
+#define N_BUCKETS (1 << (W - 1))
+#define WIDTH (1 << (W - 1))
+
+typedef struct signed_scalar_t {
+  int8_t b[N_WINDOWS + 1];
+} signed_scalar_t;
+
+static inline void sign_encode(signed_scalar_t * out, const blst_scalar * in) {
+  uint32_t window, rem = 0;
+  for (int i = 0; i < N_WINDOWS; ++i) {
+    window = rem + in->b[i];
+    rem = (window + WIDTH) >> W;
+    out->b[i] = window - (rem << W);
+  }
+  out->b[N_WINDOWS] = rem;
+}
 
 extern limb_t scratch[P1_SCRATCH_SIZE];
 extern blst_p1_xyzz windows[N_WINDOWS];

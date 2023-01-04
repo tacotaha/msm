@@ -8,7 +8,7 @@ EXEC=msm
 all: $(EXEC)
 
 msm: libblst.a msm.o main.o
-	$(CC) $(LDFLAGS) $(OBJ) main.o -o msm
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) main.o -o msm
 
 main.o: main.c
 	$(CC) $(CFLAGS) -I$(BLST_ROOT) -c main.c -o main.o

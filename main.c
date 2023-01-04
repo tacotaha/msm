@@ -3,12 +3,22 @@
 #include <assert.h>
 #include <sys/random.h>
 
-#include <x86intrin.h>
-
 #include "bindings/blst.h"
 #include "msm.h"
 
 #define RUNS (1 << 10)
+
+static inline uint64_t cycle_count() {
+#ifdef __aarch64__
+  uint64_t cc;
+  asm volatile ("mrs %0, cntvct_el0":"=r" (cc));
+  return cc;
+#else
+  uint64_t low, high;
+  asm volatile ("rdtsc":"=a" (low), "=d"(high));
+  return (high << 32) | low;
+#endif
+}
 
 int main() {
   blst_scalar scalars[N];
@@ -31,14 +41,14 @@ int main() {
     const blst_p1 *const p1_arg[2] = { pts, NULL };
     blst_p1s_to_affine(pts_affine, p1_arg, N);
 
-    cc_start = __rdtsc();
+    cc_start = cycle_count();
     msm(&res1, pts_affine, scalars, N);
-    cc_stop = __rdtsc();
+    cc_stop = cycle_count();
     c_avg1 += (cc_stop - cc_start);
 
-    cc_start = __rdtsc();
+    cc_start = cycle_count();
     blst_msm(&res2, pts_affine, scalars, N);
-    cc_stop = __rdtsc();
+    cc_stop = cycle_count();
     c_avg2 += (cc_stop - cc_start);
 
     assert(blst_p1_is_equal(&res1, &res2));

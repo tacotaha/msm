@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <omp.h>
 
 #include "bindings/blst.h"
@@ -11,16 +10,22 @@ blst_p1_xyzz windows[N_WINDOWS] = { 0 };
 
 void msm(blst_p1 * res, blst_p1_affine * pts, blst_scalar * scalars, size_t n) {
   blst_p1_xyzz sum = { 0 };
+  signed_scalar_t encoded[N] = { 0 };
+
+  for (int i = 0; i < N; ++i)
+    sign_encode(encoded + i, scalars + i);
 
 #pragma omp parallel for
-  for (int i = 0; i < N_WINDOWS; ++i) {
-    unsigned char window;
+  for (int i = 0; i < N_WINDOWS + 1; ++i) {
+    int8_t window, index;
     blst_p1_xyzz buckets[N_BUCKETS] = { 0 }, sum = { 0 };
 
     for (size_t j = 0; j < n; ++j) {
-      window = scalars[j].b[i];
-      if (window)
-        vartime_blst_p1xyzz_dadd_affine(buckets + window - 1, buckets + window - 1, pts + j, 0);
+      window = encoded[j].b[i];
+      if (window) {
+        index = (window < 0 ? -window : window) - 1;
+        vartime_blst_p1xyzz_dadd_affine(buckets + index, buckets + index, pts + j, window < 0);
+      }
     }
 
     memset(&sum, 0, sizeof(sum));
@@ -31,7 +36,7 @@ void msm(blst_p1 * res, blst_p1_affine * pts, blst_scalar * scalars, size_t n) {
     }
   }
 
-  for (int j = N_WINDOWS - 1; j > -1; --j) {
+  for (int j = N_WINDOWS; j > -1; --j) {
     for (int k = 0; k < W; ++k)
       vartime_blst_p1xyzz_dadd(&sum, &sum, &sum);
     vartime_blst_p1xyzz_dadd(&sum, windows + j, &sum);
