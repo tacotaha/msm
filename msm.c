@@ -32,7 +32,6 @@ void msm(blst_p1 * res, blst_p1_affine * pts, blst_scalar * scalars, size_t n) {
     for (int j = N_BUCKETS - 1; j > -1; --j) {
       vartime_blst_p1xyzz_dadd(&sum, buckets + j, &sum);
       vartime_blst_p1xyzz_dadd(windows + i, &sum, windows + i);
-      memset(buckets + j, 0, sizeof(blst_p1_xyzz));
     }
   }
 

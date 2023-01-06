@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O3 -Wall -Wextra -Werror -D__ADX__ -march=native -mtune=native -fopenmp #-fno-omit-frame-pointer -g
+CFLAGS=-O3 -Wall -Wextra -Werror -static -fopenmp -D__ADX__
 LDFLAGS=-lgomp
 BLST_ROOT=$(realpath ./blst)
 OBJ=msm.o libblst.a
